@@ -124,39 +124,7 @@ const ManageCategory = () => {
     }
   }, [img]);
 
-  // ✅ Save all sort updates (PATCH each factory individually)
-  const handleSaveAllSorts = async () => {
-    try {
-      const updates = categories
-        .filter((c) => c.id && c.sort !== undefined && c.sort !== null)
-        .map(({ id, sort }) => ({ id, sort: Number(sort) }));
-
-      if (updates.length === 0) {
-        alert('No factories to update!');
-        return;
-      }
-
-      for (const { id, sort } of updates) {
-        const res = await fetch(`/api/factory1/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sort }),
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json();
-          console.error(`❌ Failed for ID ${id}: ${errorData.error}`);
-        }
-      }
-
-      alert('✅ All sort values saved successfully!');
-      fetchCategories();
-    } catch (error) {
-      console.error('Error saving sorts:', error);
-      alert('❌ Failed to save sort values');
-    }
-  };
-
+ 
   return (
     <div className="container mx-auto p-4 text-[13px]">
       <h1 className="text-2xl font-bold mb-4">
@@ -197,23 +165,14 @@ const ManageCategory = () => {
         )}
       </form>
 
-      {/* ✅ SORT SAVE BUTTON */}
-      <div className="mb-4 flex justify-end">
-        <button
-          onClick={handleSaveAllSorts}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Save Sorts
-        </button>
-      </div>
+ 
 
       {/* ✅ FACTORY TABLE */}
       <table className="table-auto w-full border-collapse border border-gray-300">
         <thead className="bg-gray-100">
           <tr>
             <th className="border p-2 text-left">Image</th>
-            <th className="border p-2 text-left">Name</th>
-            <th className="border p-2 text-left">Sort</th>
+            <th className="border p-2 text-left">Name</th> 
             <th className="border p-2 text-left">Actions</th>
           </tr>
         </thead>
@@ -238,20 +197,7 @@ const ManageCategory = () => {
                 </td>
                 <td className="border p-2">{category.name}</td>
 
-                {/* ✅ SORT FIELD */}
-                <td className="border p-2 w-20">
-                  <input
-                    type="number"
-                    value={category.sort || ''}
-                    onChange={(e) => {
-                      const updated = [...categories];
-                      const index = updated.findIndex((c) => c.id === category.id);
-                      updated[index].sort = e.target.value;
-                      setCategories(updated);
-                    }}
-                    className="border p-1 w-full text-center"
-                  />
-                </td>
+        
 
                 <td className="border p-2">
                   <button

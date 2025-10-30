@@ -194,15 +194,7 @@ const ManageCategory = () => {
         )}
       </form>
 
-      {/* ✅ SORT SAVE BUTTON */}
-      <div className="mb-4 flex justify-end">
-        <button
-          onClick={handleSaveAllSorts}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Save Sorts
-        </button>
-      </div>
+ 
 
       {/* CATEGORY TABLE */}
       <table className="table-auto w-full border-collapse border border-gray-300">

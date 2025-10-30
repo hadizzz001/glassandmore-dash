@@ -5,11 +5,10 @@ import Upload from '../components/Upload';
 import { useRouter } from 'next/navigation';
 
 const ManageCategory = () => {
-  const [formData, setFormData] = useState({ name: '', img: [] });
-  const [editFormData, setEditFormData] = useState({ id: '', name: '', img: [] });
+  const [formData, setFormData] = useState({ name: '' });
+  const [editFormData, setEditFormData] = useState({ id: '', name: '' });
   const [message, setMessage] = useState('');
   const [categories, setCategories] = useState([]);
-  const [img, setImg] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const router = useRouter();
 
@@ -43,7 +42,7 @@ const ManageCategory = () => {
 
     if (res.ok) {
       setMessage('Subcategory added successfully!');
-      setFormData({ name: '', img: [] });
+      setFormData({ name: '' });
       fetchCategories();
       router.refresh();
     } else {
@@ -58,9 +57,7 @@ const ManageCategory = () => {
     setEditFormData({
       id: category.id,
       name: category.name,
-      img: category.img,
     });
-    setImg(category.img);
   };
 
   const handleEditSubmit = async (e) => {
@@ -71,12 +68,11 @@ const ManageCategory = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: editFormData.name,
-          img: img,
         }),
       });
 
       if (res.ok) {
-        setEditFormData({ id: '', name: '', img: [] });
+        setEditFormData({ id: '', name: '' });
         setEditMode(false);
         fetchCategories();
         router.refresh();
@@ -111,51 +107,8 @@ const ManageCategory = () => {
     }
   };
 
-  // ✅ Handle image upload
-  const handleImgChange = (url) => {
-    if (url) setImg(url);
-  };
-
-  useEffect(() => {
-    if (!img.includes('')) {
-      setFormData((prevState) => ({ ...prevState, img }));
-    }
-  }, [img]);
-
-// ✅ Save all sort updates (PATCH each subcategory individually)
-const handleSaveAllSorts = async () => {
-  try {
-    const updates = categories
-      .filter((c) => c.id && c.sort !== undefined && c.sort !== null)
-      .map(({ id, sort }) => ({ id, sort: Number(sort) }));
-
-    if (updates.length === 0) {
-      alert('No subcategories to update!');
-      return;
-    }
-
-    // ✅ Loop through each and patch individually
-    for (const { id, sort } of updates) {
-      const res = await fetch(`/api/sub1/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sort }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        console.error(`❌ Failed for ID ${id}: ${errorData.error}`);
-      }
-    }
-
-    alert('✅ All sort values saved successfully!');
-    fetchCategories();
-  } catch (error) {
-    console.error('Error saving sorts:', error);
-    alert('❌ Failed to save sort values');
-  }
-};
-
+ 
+ 
 
 
   return (
@@ -177,7 +130,6 @@ const handleSaveAllSorts = async () => {
           className="border p-2 w-full"
         />
 
-        <Upload onFilesUpload={handleImgChange} />
 
         <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">
           {editMode ? 'Update Subcategory' : 'Add Subcategory'}
@@ -187,7 +139,7 @@ const handleSaveAllSorts = async () => {
             type="button"
             onClick={() => {
               setEditMode(false);
-              setEditFormData({ id: '', name: '', img: [] });
+              setEditFormData({ id: '', name: '' });
             }}
             className="bg-gray-500 text-white px-4 py-2 rounded ml-2"
           >
@@ -196,56 +148,23 @@ const handleSaveAllSorts = async () => {
         )}
       </form>
 
-      {/* ✅ SORT SAVE BUTTON */}
-      <div className="mb-4 flex justify-end">
-        <button
-          onClick={handleSaveAllSorts}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Save Sorts
-        </button>
-      </div>
+ 
 
       {/* ✅ SUBCATEGORY TABLE */}
       <table className="table-auto w-full border-collapse border border-gray-300">
         <thead className="bg-gray-100">
           <tr>
-            <th className="border p-2 text-left">Image</th>
-            <th className="border p-2 text-left">Name</th>
-            <th className="border p-2 text-left">Sort</th>
+            <th className="border p-2 text-left">Name</th> 
             <th className="border p-2 text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
           {categories.map((category) => (
             <tr key={category.id}>
-              <td className="border p-2">
-                {category.img && category.img.length > 0 ? (
-                  <img
-                    src={category.img[0]}
-                    alt={category.name}
-                    className="w-16 h-16 object-cover rounded"
-                  />
-                ) : (
-                  '—'
-                )}
-              </td>
+ 
               <td className="border p-2">{category.name}</td>
 
-              {/* ✅ SORT FIELD */}
-              <td className="border p-2 w-20">
-                <input
-                  type="number"
-                  value={category.sort || ''}
-                  onChange={(e) => {
-                    const updated = [...categories];
-                    const index = updated.findIndex((c) => c.id === category.id);
-                    updated[index].sort = e.target.value;
-                    setCategories(updated);
-                  }}
-                  className="border p-1 w-full text-center"
-                />
-              </td>
+ 
 
               <td className="border p-2">
                 <button

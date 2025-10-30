@@ -106,37 +106,7 @@ export default function ProductTable() {
 
 
 
-const handleSaveAll = async () => {
-  try {
-    // Filter only products that have a valid id
-    const updates = products
-      .filter((p) => p.id && p.sort !== undefined && p.sort !== null)
-      .map(({ id, sort }) => ({ id, sort }));
-
-    if (updates.length === 0) {
-      alert("No products to update!");
-      return;
-    }
-
-    // Run all PATCH requests in parallel
-    await Promise.all(
-      updates.map((item) =>
-        fetch(`/api/products1/${item.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sort: Number(item.sort) }),
-        })
-      )
-    );
-
-    alert("✅ All sort values saved successfully!");
-    fetchProducts(); // Refresh data after update
-  } catch (error) {
-    console.error("Error saving all:", error);
-    alert("❌ Failed to save sort values");
-  }
-};
-
+ 
 
 
 
@@ -181,12 +151,7 @@ const handleSaveAll = async () => {
 
       <ExportToExcel products={products} />
 
-          <button
-      onClick={handleSaveAll}
-      className="ml-3 px-4 py-2 bg-blue-600 text-white rounded mb-5"
-    >
-      Save Sorts
-    </button>
+ 
 
 
 
@@ -199,8 +164,7 @@ const handleSaveAll = async () => {
             <th className="border p-2">Category</th>
             <th className="border p-2">Type</th>
             <th className="border p-2">Stock</th>
-            <th className="border p-2">Colors & Qty</th>
-            <th className="border p-2">Sort</th> 
+            <th className="border p-2">Colors & Qty</th> 
             <th className="border p-2">Actions</th>
           </tr>
         </thead>
@@ -344,19 +308,7 @@ const handleSaveAll = async () => {
                   )}
                 </td>
 
-<td className="border p-2">
-  <input
-    type="number"
-    value={product.sort || ''}
-    onChange={(e) => {
-      const updated = [...products];
-      const index = updated.findIndex((p) => p.id === product.id);
-      updated[index].sort = e.target.value;
-      setProducts(updated); // ✅ Keep sort change in main state
-    }}
-    className="border p-1 w-20"
-  />
-</td>
+ 
 
 
 
@@ -409,16 +361,16 @@ function EditProductForm({ product, onCancel, onSave }) {
 
   const availableColors = ["black", "white", "red", "yellow", "blue", "green", "orange", "purple", "brown", "gray", "pink"];
 
-  const [selectedColors, setSelectedColors] = useState(() => {
-    const initial = {};
-    (product.color || []).forEach(c => {
-      initial[c.color] = {
-        qty: c.qty || 1,
-        sizes: c.sizes || {} // { M: { qty: 2, price: 15 } }
-      };
-    });
-    return initial;
+const [selectedColors, setSelectedColors] = useState(() => {
+  const initial = {};
+  (product.color || []).forEach(c => {
+    initial[c.color] = {
+      qty: c.qty || 1,
+    };
   });
+  return initial;
+});
+
 
   // Fetch category options
   useEffect(() => {
@@ -503,55 +455,37 @@ onSave({
   factory: selectedCategory2,
   type,
   ...(type === 'single' && { stock }),
-  ...(type === 'collection' && {
-    color: Object.entries(selectedColors).map(([colorName, data]) => ({
-      color: colorName,
-      sizes: Object.entries(data.sizes).map(([size, values]) => ({
-        size: values.size,
-        price: Number(values.price),
-        qty: Number(values.qty)
-      }))
-    }))
-  })
+...(type === 'collection' && {
+  color: Object.entries(selectedColors).map(([colorName, data]) => ({
+    color: colorName,
+    qty: Number(data.qty)
+  }))
+})
+
 });
 
   };
 
-  // Color & size logic
-  const toggleColor = (color) => {
-    setSelectedColors((prev) => {
-      if (prev[color]) {
-        const updated = { ...prev };
-        delete updated[color];
-        return updated;
-      } else {
-        return { ...prev, [color]: { qty: 1, sizes: {} } };
-      }
-    });
-  };
+const toggleColor = (color) => {
+  setSelectedColors((prev) => {
+    if (prev[color]) {
+      const updated = { ...prev };
+      delete updated[color];
+      return updated;
+    } else {
+      return { ...prev, [color]: { qty: 1 } };
+    }
+  });
+};
 
-  const updateQty = (color, qty) => {
-    setSelectedColors((prev) => ({
-      ...prev,
-      [color]: { ...prev[color], qty },
-    }));
-  };
 
-  const updateSize = (color, size, valueObj, remove = false) => {
-    setSelectedColors((prev) => {
-      const prevColor = prev[color] || { qty: 1, sizes: {} };
-      const updatedSizes = { ...prevColor.sizes };
-      if (remove) {
-        delete updatedSizes[size];
-      } else {
-        updatedSizes[size] = valueObj;
-      }
-      return {
-        ...prev,
-        [color]: { ...prevColor, qty: undefined, sizes: updatedSizes },
-      };
-    });
-  };
+ const updateQty = (color, qty) => {
+  setSelectedColors((prev) => ({
+    ...prev,
+    [color]: { qty },
+  }));
+};
+
 
   return (
     <form onSubmit={handleSubmit} className="text-[12px] border p-4 bg-gray-100 rounded">
@@ -635,77 +569,44 @@ onSave({
         )}
       </div>
 
-      {/* Collection colors and sizes */}
-      {type === "collection" && (
-        <div className="mb-6">
-          <label className="block text-lg font-bold mb-2">Choose Colors</label>
-          <div className="flex flex-col gap-4">
-            {availableColors.map((color) => {
-              const isSelected = selectedColors[color];
-              const hasSizes = isSelected && Object.keys(isSelected.sizes || {}).length > 0;
+{type === "collection" && (
+  <div className="mb-6">
+    <label className="block text-lg font-bold mb-2">Choose Colors</label>
+    <div className="flex flex-col gap-4">
+      {availableColors.map((color) => {
+        const isSelected = selectedColors[color];
 
-              return (
-                <div key={color} className="p-3 border rounded-md">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div
-                      className={`w-6 h-6 rounded-full cursor-pointer border-2 ${isSelected ? 'ring-2 ring-offset-2 ring-black' : ''}`}
-                      style={{ backgroundColor: color }}
-                      onClick={() => toggleColor(color)}
-                      title={color}
-                    ></div>
-                    <span className="capitalize font-medium">{color}</span>
-                  </div>
+        return (
+          <div key={color} className="p-3 border rounded-md">
+            <div className="flex items-center space-x-2 mb-2">
+              <div
+                className={`w-6 h-6 rounded-full cursor-pointer border-2 ${
+                  isSelected ? "ring-2 ring-offset-2 ring-black" : ""
+                }`}
+                style={{ backgroundColor: color }}
+                onClick={() => toggleColor(color)}
+              ></div>
+              <span className="capitalize font-medium">{color}</span>
+            </div>
 
-                  {isSelected && (
-                    <div className="ml-6 space-y-2">
-                      <button
-                        type="button"
-                        className="bg-blue-500 text-white px-2 py-1 text-sm rounded"
-                        onClick={() => {
-                          const size = prompt('Enter size name (e.g., S, M, L)');
-                          if (!size || size.includes(',')) {
-                            alert('Commas are not allowed in the size name.');
-                            return;
-                          }
-                          updateSize(color, size, { size, qty: 1, price: '' });
-                        }}
-                      >
-                        + Add Size
-                      </button>
-
-                      {hasSizes &&
-                        Object.entries(isSelected.sizes).map(([sizeName, sizeData]) => (
-                          <div key={sizeName} className="flex items-center gap-2 ml-4 mt-2">
-                            <span className="font-semibold">{sizeData.size}</span>
-                            <span>Price</span>
-                            <input
-                              type="number"
-                              placeholder="Price"
-                              value={sizeData.price}
-                              onChange={(e) => updateSize(color, sizeName, { ...sizeData, price: e.target.value })}
-                              className="border px-2 py-1 w-20"
-                            />
-                            <span>Qty</span>
-                            <input
-                              type="number"
-                              placeholder="Qty"
-                              value={sizeData.qty}
-                              onChange={(e) => updateSize(color, sizeName, { ...sizeData, qty: e.target.value })}
-                              className="border px-2 py-1 w-20"
-                            />
-                            <button type="button" className="text-red-500 font-bold" onClick={() => updateSize(color, sizeName, null, true)}>
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {isSelected && (
+              <div className="ml-6 space-y-2">
+                <label className="font-semibold text-sm">Qty</label>
+                <input
+                  type="number"
+                  value={selectedColors[color].qty}
+                  onChange={(e) => updateQty(color, e.target.value)}
+                  className="border px-2 py-1 w-24"
+                />
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })}
+    </div>
+  </div>
+)}
+
 
       {/* Description */}
       <label className="block text-lg font-bold mb-2">Description</label>

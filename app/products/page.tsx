@@ -22,7 +22,6 @@ export default function AddProduct() {
   const [productType, setProductType] = useState('single');
   const [selectedColors, setSelectedColors] = useState([]);
   const [colorQuantities, setColorQuantities] = useState({});
-  const [colorSizes, setColorSizes] = useState({}); 
   const [discount, setDiscount] = useState('');
   const [code, setCode] = useState(''); // new code field
 
@@ -179,26 +178,13 @@ export default function AddProduct() {
       factory: selectedFactory, 
       type: productType,
       ...(productType === 'single' && { stock }),
-      ...(productType === 'collection' && {
-        color: selectedColors.map(color => {
-          const data = colorQuantities[color] || {};
-          if (data.sizes && Object.keys(data.sizes).length > 0) {
-            return {
-              color,
-              sizes: Object.entries(data.sizes).map(([size, values]) => ({
-                size,
-                price: Number(parseFloat(values.price).toFixed(2)),
-                qty: Number(values.qty)
-              }))
-            };
-          } else {
-            return {
-              color,
-              qty: Number(data.qty || 0)
-            };
-          }
-        })
-      })
+...(productType === "collection" && {
+  color: selectedColors.map((color) => ({
+    color,
+    qty: Number(colorQuantities[color] || 0),
+  })),
+})
+
     };
 
 
@@ -230,28 +216,7 @@ export default function AddProduct() {
   };
 
 
-
-
-  // Add a size row for a color
-  const handleAddSize = (color) => {
-    setColorSizes(prev => ({
-      ...prev,
-      [color]: [...(prev[color] || []), { size: '', price: '', qty: '' }]
-    }));
-  };
-
-  // Update a specific size's field
-  const handleSizeChange = (color, index, field, value) => {
-    setColorSizes(prev => {
-      const updated = [...prev[color]];
-      updated[index][field] = value;
-      return {
-        ...prev,
-        [color]: updated
-      };
-    });
-  };
-
+ 
 
 
  
@@ -403,194 +368,48 @@ export default function AddProduct() {
         </>
       )}
 
-      {/* Color Select with Qty Inputs (only for collection) */}
-      {productType === 'collection' && (
-        <div className="mb-4">
-          <label className="block text-lg font-bold mb-2">Choose Colors</label>
-          <div className="flex flex-col gap-4">
-            {availableColors.map((color) => (
-              <div key={color} className="p-2 border rounded-md">
-                <div className="flex items-center space-x-2 mb-2">
-                  <div
-                    className={`w-6 h-6 rounded-full cursor-pointer border-2 ${selectedColors.includes(color) ? 'ring-2 ring-offset-2' : ''
-                      }`}
-                    style={{ backgroundColor: color }}
-                    onClick={() => handleColorToggle(color)}
-                  ></div>
-                  <span className="capitalize font-medium">{color}</span>
-                  {selectedColors.includes(color) && (
-                    <div className="space-y-2">
-                      {/* Color-level quantity (only if no sizes) */}
-                      {/* {!(colorQuantities[color]?.sizes && Object.keys(colorQuantities[color].sizes).length > 0) && (
-                        <input
-                          type="number"
-                          placeholder="Qty"
-                          min={0}
-                          value={colorQuantities[color]?.qty || ''}
-                          onChange={(e) =>
-                            setColorQuantities((prev) => ({
-                              ...prev,
-                              [color]: {
-                                ...prev[color],
-                                qty: e.target.value,
-                                sizes: prev[color]?.sizes || {},
-                              }
-                            }))
-                          }
-                          className="border px-2 py-1 w-20"
-                        />
-                      )} */}
+{productType === 'collection' && (
+  <div className="mb-4">
+    <label className="block text-lg font-bold mb-2">Choose Colors</label>
+    <div className="flex flex-col gap-4">
+      {availableColors.map((color) => (
+        <div key={color} className="p-2 border rounded-md">
+          <div className="flex items-center space-x-2 mb-2">
+            <div
+              className={`w-6 h-6 rounded-full cursor-pointer border-2 ${
+                selectedColors.includes(color) ? "ring-2 ring-offset-2" : ""
+              }`}
+              style={{ backgroundColor: color }}
+              onClick={() => handleColorToggle(color)}
+            ></div>
 
-                      {/* Add size button */}
-                      <button
-                        type="button"
-                        className="bg-blue-500 text-white px-2 py-1 text-sm rounded"
-                        onClick={() => {
-                          const size = prompt('Enter size name (e.g., S, M, L)');
-                          if (!size || size.includes(',')) {
-                            alert('Commas are not allowed in the size name.');
-                            return;
-                          }
+            <span className="capitalize font-medium">{color}</span>
 
-                          setColorQuantities((prev) => ({
-                            ...prev,
-                            [color]: {
-                              ...prev[color],
-                              qty: undefined, // hide top qty if sizes are used
-                              sizes: {
-                                ...prev[color]?.sizes,
-                                [size]: { price: '', qty: '' }
-                              }
-                            }
-                          }));
-                        }}
-                      >
-                        + Add Size
-                      </button>
-
-                      {/* Render sizes for this color */}
-                      {colorQuantities[color]?.sizes &&
-                        Object.entries(colorQuantities[color].sizes).map(([sizeName, sizeData]) => (
-                          <div key={sizeName} className="flex items-center gap-2 ml-4 mt-2">
-                            <span className="font-semibold">{sizeName}</span>
-                            <input
-                              type="number"
-                              placeholder="Price"
-                              value={sizeData.price}
-                              onChange={(e) =>
-                                setColorQuantities((prev) => ({
-                                  ...prev,
-                                  [color]: {
-                                    ...prev[color],
-                                    sizes: {
-                                      ...prev[color].sizes,
-                                      [sizeName]: {
-                                        ...prev[color].sizes[sizeName],
-                                        price: e.target.value
-                                      }
-                                    }
-                                  }
-                                }))
-                              }
-                              className="border px-2 py-1 w-20"
-                            />
-                            <input
-                              type="number"
-                              placeholder="Qty"
-                              value={sizeData.qty}
-                              min={0}
-                              onChange={(e) =>
-                                setColorQuantities((prev) => ({
-                                  ...prev,
-                                  [color]: {
-                                    ...prev[color],
-                                    sizes: {
-                                      ...prev[color].sizes,
-                                      [sizeName]: {
-                                        ...prev[color].sizes[sizeName],
-                                        qty: e.target.value
-                                      }
-                                    }
-                                  }
-                                }))
-                              }
-                              className="border px-2 py-1 w-20"
-                            />
-                            <button
-                              type="button"
-                              className="text-red-500 font-bold"
-                              onClick={() => {
-                                const newSizes = { ...colorQuantities[color].sizes };
-                                delete newSizes[sizeName];
-
-                                setColorQuantities((prev) => ({
-                                  ...prev,
-                                  [color]: {
-                                    ...prev[color],
-                                    sizes: newSizes
-                                  }
-                                }));
-                              }}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                    </div>
-                  )}
-
-                </div>
-
-                {/* Sizes */}
-                {selectedColors.includes(color) && colorSizes[color] && (
-                  <div className="ml-6">
-                    {colorSizes[color].map((sz, idx) => (
-                      <div key={idx} className="flex items-center space-x-2 mb-2">
-                        <input
-                          type="text"
-                          placeholder="Size"
-                          value={sz.size}
-                          onChange={(e) =>
-                            handleSizeChange(color, idx, 'size', e.target.value)
-                          }
-                          className="border px-2 py-1 w-20"
-                        />
-                        <input
-                          type="number"
-                          placeholder="Price"
-                          value={sz.price}
-                          onChange={(e) =>
-                            handleSizeChange(color, idx, 'price', e.target.value)
-                          }
-                          className="border px-2 py-1 w-24"
-                        />
-                        <input
-                          type="number"
-                          placeholder="Qty"
-                          min={0}
-                          value={sz.qty}
-                          onChange={(e) =>
-                            handleSizeChange(color, idx, 'qty', e.target.value)
-                          }
-                          className="border px-2 py-1 w-20"
-                        />
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      className="text-sm bg-blue-500 text-white px-2 py-1 rounded"
-                      onClick={() => handleAddSize(color)}
-                    >
-                      Add Size
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+            {selectedColors.includes(color) && (
+              <>
+                {/* QTY input only */}
+                <input
+                  type="number"
+                  placeholder="Qty"
+                  min={1}
+                  value={colorQuantities[color] || ""}
+                  onChange={(e) =>
+                    setColorQuantities((prev) => ({
+                      ...prev,
+                      [color]: e.target.value,
+                    }))
+                  }
+                  className="border px-2 py-1 w-24 ml-4"
+                />
+              </>
+            )}
           </div>
         </div>
+      ))}
+    </div>
+  </div>
+)}
 
-      )}
 
 
       <label className="block text-lg font-bold mb-2">Description</label>

@@ -11,26 +11,17 @@ export async function PATCH(request, { params }) {
     price,
     discount,
     img,
-    category, 
+    category,
     stock,
-    arrival ,
-    color ,
-    type ,
-      origin       ,
-  weight       ,
-  profit       ,
-  rate         ,
-  shippingCost ,
-  landing      ,
-  profitAmount ,
-  date        ,
-           sub,
-      factory,
-      code,
+    arrival,
+    color,
+    type,
+    sub,
+    factory,
   } = await request.json();
 
   console.log("imgs are: ", img);
-  
+
 
   try {
     // Update product and its specifications
@@ -42,22 +33,13 @@ export async function PATCH(request, { params }) {
         price,
         discount,
         img,
-        category, 
+        category,
         stock,
-        arrival ,
-        color ,
-        type ,
-          origin       ,
-  weight       ,
-  profit       ,
-  rate         ,
-  shippingCost ,
-  landing      ,
-  profitAmount ,
-  date        ,
-               sub,
-      factory,
-      code,
+        arrival,
+        color,
+        type,
+        sub,
+        factory,
       },
     });
 
@@ -76,7 +58,7 @@ export async function DELETE(request, { params }) {
   const { id } = params;
 
   try {
- 
+
 
     // Delete the product
     await prisma.product.delete({

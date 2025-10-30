@@ -408,61 +408,49 @@ const [selectedColors, setSelectedColors] = useState(() => {
     fetchOptions();
   }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+const handleSubmit = (e) => {
+  e.preventDefault();
 
-    // ✅ Validation for collection type
-    if (type === "collection") {
-      for (const [colorName, data] of Object.entries(selectedColors)) {
-        const { sizes } = data;
-        if (!sizes || Object.keys(sizes).length === 0) {
-          alert(`Color "${colorName}" must have at least 1 size`);
-          return;
-        }
-        for (const [sizeName, sizeData] of Object.entries(sizes)) {
-          if (!sizeData.price || sizeData.price <= 0) {
-            alert(`Size "${sizeName}" of color "${colorName}" must have a valid price`);
-            return;
-          }
-          if (!sizeData.qty || sizeData.qty <= 0) {
-            alert(`Size "${sizeName}" of color "${colorName}" must have a valid quantity`);
-            return;
-          }
-        }
+  // ✅ NEW VALIDATION (no sizes anymore)
+  if (type === "collection") {
+    for (const [colorName, data] of Object.entries(selectedColors)) {
+      if (!data.qty || data.qty <= 0) {
+        alert(`Please enter a valid quantity (greater than 0) for color "${colorName}".`);
+        return;
       }
     }
+  }
 
-// Convert percentage discount to actual discounted price
-let finalDiscountPrice = price;
-if (price && discount) {
-  const percentage = Number(discount);
-  const numericPrice = Number(price);
-  const discountedValue = numericPrice - (numericPrice * percentage / 100);
-  finalDiscountPrice = discountedValue.toFixed(2);
-}
+  // Convert percentage discount to actual discounted price
+  let finalDiscountPrice = price;
+  if (price && discount) {
+    const percentage = Number(discount);
+    const numericPrice = Number(price);
+    const discountedValue = numericPrice - (numericPrice * percentage / 100);
+    finalDiscountPrice = discountedValue.toFixed(2);
+  }
 
-onSave({
-  ...product,
-  title,
-  description,
-  price: Number(price).toFixed(2),
-  discount: String(finalDiscountPrice), // ✅ save as string
-  img,
-  category: selectedCategory,
-  sub: selectedCategory1,
-  factory: selectedCategory2,
-  type,
-  ...(type === 'single' && { stock }),
-...(type === 'collection' && {
-  color: Object.entries(selectedColors).map(([colorName, data]) => ({
-    color: colorName,
-    qty: Number(data.qty)
-  }))
-})
+  onSave({
+    ...product,
+    title,
+    description,
+    price: Number(price).toFixed(2),
+    discount: String(finalDiscountPrice),
+    img,
+    category: selectedCategory,
+    sub: selectedCategory1,
+    factory: selectedCategory2,
+    type,
+    ...(type === 'single' && { stock }),
+    ...(type === 'collection' && {
+      color: Object.entries(selectedColors).map(([colorName, data]) => ({
+        color: colorName,
+        qty: Number(data.qty),
+      }))
+    })
+  });
+};
 
-});
-
-  };
 
 const toggleColor = (color) => {
   setSelectedColors((prev) => {
@@ -534,11 +522,7 @@ const toggleColor = (color) => {
         </div>
       </div>
 
-      {/* Price, Discount, Stock */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-        {type === "single" && (
-          <>
-            <div className="mt-4">
+                  <div className="mt-4">
               <label className="text-sm font-bold">Price</label>
               <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full border p-2 mb-2" />
             </div>
@@ -547,6 +531,12 @@ const toggleColor = (color) => {
               <label className="text-sm font-bold">Discount %</label>
               <input type="number" value={discount} onChange={(e) => setDiscount(e.target.value)} className="w-full border p-2 mb-2" />
             </div>
+
+      {/* Price, Discount, Stock */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        {type === "single" && (
+          <>
+
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">Stock</label>

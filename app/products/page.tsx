@@ -288,10 +288,8 @@ for (const color of selectedColors) {
         </div>
       </div>
 
-      {/* Stock Input (only for 1 item) */}
-      {productType === 'single' && (
-        <>
-              <input
+
+                    <input
         type="number"
         step="0.01"
         placeholder="Price"
@@ -307,11 +305,16 @@ for (const color of selectedColors) {
         <input
   type="number"
   step="0.01"
-  placeholder="Discounted"
+  placeholder="Discounted %"
   value={discount}
   onChange={(e) => setDiscount(e.target.value)}
   className="w-full border p-2 mb-4"
 />
+
+      {/* Stock Input (only for 1 item) */}
+      {productType === 'single' && (
+        <>
+
 
         <input
           type="number"

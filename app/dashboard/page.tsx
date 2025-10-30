@@ -234,31 +234,82 @@ export default function ProductTable() {
                   )}
                 </td> */}
 <td className="border p-2">
-  {product.type === 'single' || (product.type === 'collection' && !product.color)
-    ? (
-      product.discount && product.discount > 0
-        ? `$${product.discount}`
-        : `$${product.price}`
-    )
-    : (product.type === 'collection' && product.color && product.color.some(c => c.sizes?.length)
-      ? (() => {
-          const prices = product.color
-            .flatMap(c => c.sizes || [])
-            .map(s => s.price);
+  {(() => {
+    // SINGLE PRODUCT
+    if (product.type === "single") {
+      if (product.discount && product.discount > 0) {
+        return (
+          <span>
+            <span className="line-through text-red-600 mr-1">${product.price}</span>
+            <span className="font-bold text-green-600">${product.discount}</span>
+          </span>
+        );
+      }
+      return `$${product.price}`;
+    }
 
-          if (prices.length === 0) return `$${product.price}`;
+    // COLLECTION PRODUCT
+    if (product.type === "collection") {
+      if (product.color && product.color.length > 0) {
+        // If collection has sizes
+        const priceList = product.color.flatMap((c) =>
+          c.sizes && c.sizes.length > 0
+            ? c.sizes.map((s) => ({
+                regular: parseFloat(s.price),
+                discount: parseFloat(s.discount || 0),
+              }))
+            : [
+                {
+                  regular: parseFloat(c.price),
+                  discount: parseFloat(c.discount || 0),
+                },
+              ]
+        );
 
-          const minPrice = Math.min(...prices);
-          const maxPrice = Math.max(...prices);
+        if (priceList.length > 0) {
+          const minRegular = Math.min(...priceList.map((p) => p.regular));
+          const maxRegular = Math.max(...priceList.map((p) => p.regular));
 
-          return minPrice === maxPrice
-            ? `$${minPrice.toFixed(2)}`
-            : `$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}`;
-        })()
-      : `$${product.price}`
-    )
-  }
+          const discountValues = priceList
+            .filter((p) => p.discount > 0)
+            .map((p) => p.discount);
+
+          const minDiscount = discountValues.length > 0 ? Math.min(...discountValues) : null;
+          const maxDiscount = discountValues.length > 0 ? Math.max(...discountValues) : null;
+
+          // ✅ Show discount range if exists
+          if (minDiscount !== null) {
+            return (
+              <span>
+                <span className="line-through text-red-600 mr-1">
+                  {minRegular === maxRegular
+                    ? `$${minRegular.toFixed(2)}`
+                    : `$${minRegular.toFixed(2)} - $${maxRegular.toFixed(2)}`}
+                </span>
+
+                <span className="font-bold text-green-600">
+                  {minDiscount === maxDiscount
+                    ? `$${minDiscount.toFixed(2)}`
+                    : `$${minDiscount.toFixed(2)} - $${maxDiscount.toFixed(2)}`}
+                </span>
+              </span>
+            );
+          }
+
+          // No discount, return price range
+          return minRegular === maxRegular
+            ? `$${minRegular.toFixed(2)}`
+            : `$${minRegular.toFixed(2)} - $${maxRegular.toFixed(2)}`;
+        }
+      }
+
+      return `$${product.price}`;
+    }
+
+    return `$${product.price}`;
+  })()}
 </td>
+
 
 
                 <td className="border p-2">{product.category}</td>

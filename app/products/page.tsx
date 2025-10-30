@@ -23,7 +23,6 @@ export default function AddProduct() {
   const [selectedColors, setSelectedColors] = useState([]);
   const [colorQuantities, setColorQuantities] = useState({});
   const [discount, setDiscount] = useState('');
-  const [code, setCode] = useState(''); // new code field
 
 
 
@@ -115,57 +114,21 @@ export default function AddProduct() {
         return;
       }
 
-      let atLeastOneValid = false;
+for (const color of selectedColors) {
+  const qty = Number(colorQuantities[color]);
 
-      for (const color of selectedColors) {
-        const colorData = colorQuantities[color];
+  if (isNaN(qty) || qty <= 0) {
+    alert(`Please enter a valid quantity (greater than 0) for color "${color}".`);
+    return;
+  }
+}
 
-        if (!colorData) {
-          alert(`Missing data for color: ${color}`);
-          return;
-        }
-
-        const sizes = colorData.sizes;
-
-        if (sizes && Object.keys(sizes).length > 0) {
-          for (const [size, { price, qty }] of Object.entries(sizes)) {
-            const priceNum = Number(price);
-            const qtyNum = Number(qty);
-
-            if (isNaN(priceNum) || priceNum <= 0) {
-              alert(`Please enter a valid price for size "${size}" in color "${color}".`);
-              return;
-            }
-
-            if (isNaN(qtyNum) || qtyNum <= 0) {
-              alert(`Please enter a valid quantity for size "${size}" in color "${color}".`);
-              return;
-            }
-
-            atLeastOneValid = true;
-          }
-        } else {
-          const colorQty = Number(colorData.qty);
-          if (isNaN(colorQty) || colorQty <= 0) {
-            alert(`Please enter a valid quantity (greater than 0) for color "${color}".`);
-            return;
-          }
-
-          atLeastOneValid = true;
-        }
-      }
-
-      if (!atLeastOneValid) {
-        alert('At least one color or size must have valid quantity and price.');
-        return;
-      }
     }
 
 
 
     const payload = {
       title,
-      code, // include in payload
       description,
       price: Number(price).toFixed(2),
     discount: discount
@@ -181,9 +144,10 @@ export default function AddProduct() {
 ...(productType === "collection" && {
   color: selectedColors.map((color) => ({
     color,
-    qty: Number(colorQuantities[color] || 0),
+    qty: Number(colorQuantities[color]),
   })),
 })
+
 
     };
 
@@ -236,14 +200,7 @@ export default function AddProduct() {
         required
       />
 
-      <input
-  type="text"
-  placeholder="Item Code"
-  value={code}
-  onChange={(e) => setCode(e.target.value)}
-  className="w-full border p-2 mb-4"
-  required
-/>
+
 
 
       {/* Category Selection */}

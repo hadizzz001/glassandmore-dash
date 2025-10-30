@@ -123,35 +123,7 @@ const ManageCategory = () => {
     }
   }, [img]);
 
-  // ✅ Save all sort updates
-  const handleSaveAllSorts = async () => {
-    try {
-      const updates = categories
-        .filter((c) => c.id && c.sort !== undefined && c.sort !== null)
-        .map(({ id, sort }) => ({ id, sort }));
-
-      if (updates.length === 0) {
-        alert('No categories to update!');
-        return;
-      }
-
-      await Promise.all(
-        updates.map((item) =>
-          fetch(`/api/category1/${item.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sort: Number(item.sort) }),
-          })
-        )
-      );
-
-      alert('✅ All category sort values saved successfully!');
-      fetchCategories();
-    } catch (error) {
-      console.error('Error saving sorts:', error);
-      alert('❌ Failed to save sort values');
-    }
-  };
+ 
 
   return (
     <div className="container mx-auto p-4 text-[13px]">
@@ -201,8 +173,7 @@ const ManageCategory = () => {
         <thead className="bg-gray-100">
           <tr>
             <th className="border p-2 text-left">Image</th>
-            <th className="border p-2 text-left">Name</th>
-            <th className="border p-2 text-left">Sort</th>
+            <th className="border p-2 text-left">Name</th> 
             <th className="border p-2 text-left">Actions</th>
           </tr>
         </thead>
@@ -222,20 +193,7 @@ const ManageCategory = () => {
               </td>
               <td className="border p-2">{category.name}</td>
 
-              {/* ✅ SORT FIELD */}
-              <td className="border p-2 w-20">
-                <input
-                  type="number"
-                  value={category.sort || ''}
-                  onChange={(e) => {
-                    const updated = [...categories];
-                    const index = updated.findIndex((c) => c.id === category.id);
-                    updated[index].sort = e.target.value;
-                    setCategories(updated);
-                  }}
-                  className="border p-1 w-full text-center"
-                />
-              </td>
+ 
 
               <td className="border p-2">
                 <button

@@ -345,7 +345,6 @@ export default function ProductTable() {
  
 function EditProductForm({ product, onCancel, onSave }) {
   const [title, setTitle] = useState(product.title);
-  const [code, setcode] = useState(product.code); // ✅ NEW FIELD
   const [stock, setStock] = useState(product.stock || "0");
   const [img, setImg] = useState(product.img || []);
   const [description, setDescription] = useState(product.description);
@@ -445,7 +444,6 @@ if (price && discount) {
 onSave({
   ...product,
   title,
-  code,
   description,
   price: Number(price).toFixed(2),
   discount: String(finalDiscountPrice), // ✅ save as string
@@ -503,18 +501,7 @@ const toggleColor = (color) => {
         />
       </div>
 
-      {/* ✅ Item Code */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700">Item Code</label>
-        <input
-          type="text"
-          value={code}
-          onChange={(e) => setcode(e.target.value)}
-          className="w-full border p-2"
-          placeholder="Enter unique item code (e.g. A1234)"
-          required
-        />
-      </div>
+
 
       {/* Category Selects */}
       <select className="w-full p-2 border mb-2" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} required>

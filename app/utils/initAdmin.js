@@ -2,15 +2,15 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export async function initAdmin() {
-  const existingAdmin = await prisma.user.findFirst();
-  if (!existingAdmin) {
-    await prisma.user.create({
-      data: {
-        username: "admin",
-        password: "admin",
-      },
-    });
+  await prisma.user.upsert({
+    where: { id: "admin-user-id" }, // fixed id to prevent duplicates
+    update: {},
+    create: {
+      id: "admin-user-id",
+      username: "admin",
+      password: "admin",
+    },
+  });
 
-    console.log("✅ Default admin created: admin / admin");
-  }
+  console.log("✅ Admin ensured (admin/admin)");
 }

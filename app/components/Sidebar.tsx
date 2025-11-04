@@ -71,6 +71,11 @@ export default function Sidebar() {
               </a>
             </li>  */}
             <li>
+              <a href="/setting" style={{ color: "white", textDecoration: "none" }}>
+                Security Settings
+              </a>
+            </li>
+            <li>
               <a href="/" style={{ color: "white", textDecoration: "none" }}>
                 Logout
               </a>

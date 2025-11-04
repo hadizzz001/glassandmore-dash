@@ -1,103 +1,155 @@
-"use client";
+"use client"
 
-import axios, { AxiosError } from "axios";
-import { useRouter } from "next/navigation";
 
-export default function Home() {
-  const { push } = useRouter();
+import { useRouter } from 'next/navigation'
+import axios from "axios";
+import React, { useState } from "react";
+import $ from 'jquery';
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
 
-    const payload = {
-      username: event.currentTarget.username.value,
-      password: event.currentTarget.password.value,
-    };
 
-    try {
-      const { data } = await axios.post("/api/auth/login", payload);
 
-      alert(JSON.stringify(data));
-      window.location.replace("/dashboard");
-    } catch (e) {
-      const error = e as AxiosError;
 
-      alert(error.message);
+const login = () => {
+    const router = useRouter()
+
+
+    if (typeof window !== "undefined") {
+        var tabID = sessionStorage.tabID &&
+            sessionStorage.closedLastTab !== '2' ?
+            sessionStorage.tabID :
+            sessionStorage.tabID = Math.random();
+        sessionStorage.closedLastTab = '2';
+        $(window).on('unload beforeunload', function () {
+            sessionStorage.closedLastTab = '1';
+        });
     }
-  };
 
-  return (
+    // localStorage.setItem("tabID", tabID);
+    // window.dispatchEvent(new Event("storage"));
 
-
-
-<>
-  <style
-    dangerouslySetInnerHTML={{
-      __html: `
-        body {
-          background: black !important;
+    async function getData() {
+        const res = await fetch("http://localhost:3000/api/login", { cache: 'no-store' });
+        if (!res.ok) {
+            throw new Error("Failed to fetch data")
         }
-      `,
-    }}
-  />
+        return res.json();
+    }
 
-  <section className="h-screen flex items-center justify-center bg-black px-4">
-    <div className="w-full max-w-md">
-      {/* Logo Section */}
-      <div className="flex justify-center mb-6">
-        <img
-          src="https://res.cloudinary.com/dnucihygt/image/upload/v1761773208/69007de9-2b7b-4e54-9c40-d60535e52891-removebg-preview_1_1_z05lce.png"
-          className="w-40 sm:w-48"
-          alt="Sample image"
-        />
-      </div>
 
-      {/* Form Section */}
-      <div className="bg-gray-900 p-6 rounded-lg shadow-lg">
-        <h2 className="text-white text-center text-xl font-semibold mb-4">Login</h2>
-        
-        <form onSubmit={handleSubmit}>
-          {/* Username Field */}
-          <div className="mb-4">
-            <input
-              type="text"
-              className="w-full rounded p-2 bg-gray-800 text-white outline-none border border-gray-700"
-              id="username"
-              name="username"
-              placeholder="Username"
-            />
-          </div>
+    async function handleEditSubmit() {
 
-          {/* Password Field */}
-          <div className="mb-4">
-            <input
-              type="password"
-              className="w-full rounded p-2 bg-gray-800 text-white outline-none border border-gray-700"
-              id="password"
-              name="password"
-              placeholder="Password"
-            />
-          </div>
+        axios
+            .patch(`/api/login/6541366999820c954845b8a8`, tabID)
+            .then((res) => {
+                console.log(res);
+            })
+            .catch((err) => {
+                console.log("Error");
+                console.log(err);
+            })
+    }
 
-          {/* Login Button */}
-          <div className="text-center">
-            <button
-              type="submit"
-              className="w-full bg-[#ab695d] text-white py-2 rounded-md hover:bg-[#924f48] transition"
-            >
-              Login
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </section>
-  <style
+
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const username = e.target.username.value;
+  const password = e.target.pass.value;
+
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Login failed");
+      return;
+    }
+
+    // ✅ Login success
+    console.log("Logged in:", data);
+    alert("Success");
+    router.push("/");
+  } catch (error) {
+    console.error("Login error:", error);
+    alert("Something went wrong.");
+  }
+};
+
+
+
+
+
+
+
+
+return (
+  <div className="w-full h-screen flex justify-center items-center bg-gray-100">
+    <div className="w-full max-w-xs">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+      >
+        <div className="mb-4">
+          <label
+            className="block text-gray-700 text-sm font-bold mb-2"
+            htmlFor="username"
+          >
+            Username
+          </label>
+          <input
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            id="username"
+            name="username"
+            type="text"
+            placeholder="Username"
+          />
+        </div>
+
+        <div className="mb-6">
+          <label
+            className="block text-gray-700 text-sm font-bold mb-2"
+            htmlFor="password"
+          >
+            Password
+          </label>
+          <input
+            className="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+            id="password"
+            name="pass"
+            type="password"
+            placeholder="******************"
+          />
+          <p className="text-red-500 text-xs italic">
+            Please choose a password.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            type="submit"
+          >
+            Sign In
+          </button>
+        </div>
+      </form>
+
+      <style
         dangerouslySetInnerHTML={{
-          __html: "\n  #sidenavv{\n    display:none;\n} ",
+          __html: "\n#sidenavv { display: none; }",
         }}
       />
-</>
+    </div>
+  </div>
+);
 
-  );
-}
+};
+
+export default login;

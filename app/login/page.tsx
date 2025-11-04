@@ -52,24 +52,36 @@ const login = () => {
 
 
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const getD = await getData();
-        const user = e.target[0].value;
-        const pass = e.target[1].value;
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-        if (getD[0].username == user && getD[0].pass == pass) {
-            await handleEditSubmit()
-            alert("Success");
-            console.log("local tabid = " + tabID)
-            console.log("data tabid = " + getD[0].tabid)
-            router.push("/")
-        }
-        else {
-            alert("Failed : Please check your login details and try again");
-        }
+  const username = e.target.username.value;
+  const password = e.target.pass.value;
 
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Login failed");
+      return;
     }
+
+    // ✅ Login success
+    console.log("Logged in:", data);
+    alert("Success");
+    router.push("/");
+  } catch (error) {
+    console.error("Login error:", error);
+    alert("Something went wrong.");
+  }
+};
+
 
 
 

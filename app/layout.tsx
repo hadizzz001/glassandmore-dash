@@ -4,6 +4,7 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Sidebar from "./components/Sidebar"; // Import Sidebar
+import { initAdmin } from "../app/utils/initAdmin"; 
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -12,11 +13,15 @@ export const metadata = {
   description: "Dashboard",
 };
 
-export default function RootLayout({
+export default async  function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+    await initAdmin();
+
+
+
   return (
     <html lang="en">
       <head>

@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { verify } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { COOKIE_NAME } from "@/constants";
+import { COOKIE_NAME } from "../../../constants";
 
 const prisma = new PrismaClient();
 

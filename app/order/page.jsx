@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 const page = () => {
   const [allTemp1, setTemp1] = useState()
   const searchParams = useSearchParams()
-  const search = searchParams.get('id') 
+  const search = searchParams.get('id')
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [allProducts, setAllProducts] = useState([]);
@@ -19,16 +19,16 @@ const page = () => {
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
   const [qty, setQty] = useState(1);
-    const [totalAmount, setTotalAmount] = useState(null)
+  const [totalAmount, setTotalAmount] = useState(null)
   const [editableData, setEditableData] = useState({
     fname: allTemp1?.cartItems?.fname || '',
     lname: allTemp1?.cartItems?.lname || '',
     phone: allTemp1?.cartItems?.phone || '',
     city: allTemp1?.cartItems?.city || '',
     address: allTemp1?.cartItems?.address || '',
-    apt: allTemp1?.cartItems?.apt || '', 
+    apt: allTemp1?.cartItems?.apt || '',
   });
-  const [remark, setRemark] = useState({ 
+  const [remark, setRemark] = useState({
     apt: allTemp1?.remark || ''
   });
 
@@ -41,7 +41,7 @@ const page = () => {
         const response = await fetch(`/api/order/${search}`);
         if (response.ok) {
           const data = await response.json();
-          setTemp1(data); 
+          setTemp1(data);
 
           setEditableData({
             fname: data?.cartItems?.fname || '',
@@ -78,10 +78,10 @@ const page = () => {
       const response = await fetch(`/api/order/${search}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           cartItems: editableData,
           remark
-         }),
+        }),
       });
 
       if (response.ok) {
@@ -193,7 +193,7 @@ const page = () => {
     return { totalPrice: 0, totalItems: 0 };
   };
   const finalTotal = calculateFinalTotal();
- 
+
 
 
   const fetchAvailableProducts = async () => {
@@ -222,22 +222,19 @@ const page = () => {
     setSelectedSize('');
 
     if (product.type === 'collection') {
-      const hasSizes = product.color[0]?.sizes;
-      setAvailableColors(product.color.map(c => c.color));
-
-      if (hasSizes) {
-        // wait until color is selected to fetch sizes
-        setAvailableSizes([]);
-      }
+      setAvailableColors(product.color.map(c => c.title)); // ✅ use title
+      setAvailableSizes([]);
     } else {
       setAvailableColors([]);
       setAvailableSizes([]);
     }
   };
 
-  const handleColorChange = (color) => {
-    setSelectedColor(color);
-    const colorObj = selectedProduct.color.find(c => c.color === color);
+
+  const handleColorChange = (colorTitle) => {
+    setSelectedColor(colorTitle);
+
+    const colorObj = selectedProduct.color.find(c => c.title === colorTitle); // ✅ match title
 
     if (colorObj?.sizes) {
       setAvailableSizes(colorObj.sizes.map(s => s.size));
@@ -245,6 +242,7 @@ const page = () => {
       setAvailableSizes([]);
     }
   };
+
 
 
 
@@ -269,6 +267,7 @@ const page = () => {
       if (hasSizes) {
         // Case 3: Collection with color and sizes
         const payload = `${item._id || item.id},${item.quantity},${item.selectedColor},${item.selectedSize}`;
+
         console.log('PATCH to api/stock5 with payload:', payload);
 
         await fetch(`api/stock5`, {
@@ -319,9 +318,9 @@ const page = () => {
 
 
 
-  const handleRemarkChange = (event) => { 
-  setRemark(event.target.value);
-};
+  const handleRemarkChange = (event) => {
+    setRemark(event.target.value);
+  };
 
 
 
@@ -329,55 +328,65 @@ const page = () => {
 
 
 
-const calculateOrderTotal = async (orders) => {
-  let grandTotal = 0;
+  const calculateOrderTotal = async (orders) => {
+    let grandTotal = 0;
 
-  for (const order of orders) {
-    let orderTotal = 0;
+    for (const order of orders) {
+      let orderTotal = 0;
 
-    for (const item of order.userInfo) {
-      let price = 0;
+      for (const item of order.userInfo) {
+        let price = 0;
 
-      if (item.type === "single" || (item.type === "collection" && !item.selectedSize)) {
-        price = parseFloat(item.discount);
-      } else if (item.type === "collection" && item.selectedColor && item.selectedSize) {
-        const selectedColor = item.color.find(c => c.color === item.selectedColor);
+        // If the type is single OR collection with no size selected
+        if (item.type === "single" || (item.type === "collection" && !item.selectedSize)) {
+          price = parseFloat(item.discount || "0");
+        }
 
-        const selectedSize = selectedColor?.sizes?.find(
-          s => s.size === item.selectedSize
-        );
+        // ✅ Collection logic (matches your new structure)
+        else if (item.type === "collection" && item.selectedColor && item.selectedSize) {
 
-        price = parseFloat(selectedSize?.price || "0");
+          // Fix: match color by title, NOT by c.color
+          const selectedColorObj = item.color.find(
+            (c) => c.title.toLowerCase() === item.selectedColor.toLowerCase()
+          );
+
+          // Find size under that color
+          const selectedSizeObj = selectedColorObj?.sizes?.find(
+            (s) => s.size === item.selectedSize
+          );
+
+          price = parseFloat(selectedSizeObj?.price || "0");
+        }
+
+        const qty = parseInt(item.quantity || 1, 10);
+        orderTotal += price * qty;
       }
 
-      const qty = parseInt(item.quantity || 1, 10);
-      orderTotal += price * qty;
-    }
+      // Add delivery fee
+      const delivery = parseFloat(order.delivery || "0");
+      orderTotal += delivery;
 
-    // Add delivery fee
-    const delivery = parseFloat(order.delivery || "0");
-    orderTotal += delivery;
-
-    // Apply discount if applicable
-    let discountPercent = 0;
-    if (order.code) {
-      try {
-        const res = await fetch(`/api/offer/${order.code}`);
-        const data = await res.json();
-        discountPercent = data?.per || 0;
-      } catch (error) {
-        console.error("Failed to fetch discount:", error);
+      // Apply discount if coupon exists
+      let discountPercent = 0;
+      if (order.code) {
+        try {
+          const res = await fetch(`/api/offer/${order.code}`);
+          const data = await res.json();
+          discountPercent = data?.per || 0;
+        } catch (error) {
+          console.error("Failed to fetch discount:", error);
+        }
       }
+
+      const discountAmount = (orderTotal * discountPercent) / 100;
+      const finalTotal = orderTotal - discountAmount;
+
+      grandTotal += finalTotal;
     }
 
-    const discountAmount = (orderTotal * discountPercent) / 100;
-    const finalTotal = orderTotal - discountAmount;
+    return grandTotal.toFixed(2);
+  };
 
-    grandTotal += finalTotal;
-  }
-
-  return grandTotal.toFixed(2);
-};
 
 
 
@@ -399,7 +408,7 @@ const calculateOrderTotal = async (orders) => {
     <>
       <div className="bg-gray-100 h-screen py-8 text-[14px]">
         <div className="container mx-auto px-4">
-          <p className="font-bold mb-4">Order #: {allTemp1?.oid}</p> 
+          <p className="font-bold mb-4">Order #: {allTemp1?.oid}</p>
           <p className="font-bold mb-4">Receipt #: {allTemp1?.num}</p>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="col-md-8">
@@ -431,12 +440,30 @@ const calculateOrderTotal = async (orders) => {
                             <td className="py-4">
                               <td>
                                 {(() => {
-                                  const colorObj = temp.color?.find(c => c.color === temp.selectedColor);
-                                  const sizeObj = colorObj?.sizes?.find(s => s.size === temp.selectedSize);
-                                  const price = sizeObj?.price ?? parseFloat(temp.discount);
+                                  let price = 0;
+
+                                  // ✅ Collection with Size
+                                  if (temp.type === "collection" && temp.selectedColor && temp.selectedSize) {
+                                    const colorObj = temp.color?.find(c => c.title === temp.selectedColor);
+                                    const sizeObj = colorObj?.sizes?.find(s => s.size === temp.selectedSize);
+                                    price = sizeObj?.price || 0;
+                                  }
+
+                                  // ✅ Collection without size (color only)
+                                  else if (temp.type === "collection") {
+                                    price = parseFloat(temp.discount) || 0;
+                                  }
+
+                                  // ✅ Single item
+                                  else {
+                                    price = parseFloat(temp.discount) || 0;
+                                  }
+
                                   return `$${price}`;
                                 })()}
                               </td>
+
+
 
 
                             </td>
@@ -478,17 +505,17 @@ const calculateOrderTotal = async (orders) => {
                     )}
                   </tbody>
                 </table>
-{!allTemp1?.delete && (
-  <button
-    onClick={() => {
-      fetchAvailableProducts();
-      setShowModal(true);
-    }}
-    className="bg-green-600 text-white px-4 py-2 rounded mb-4"
-  >
-    Add New Product
-  </button>
-)}
+                {!allTemp1?.delete && (
+                  <button
+                    onClick={() => {
+                      fetchAvailableProducts();
+                      setShowModal(true);
+                    }}
+                    className="bg-green-600 text-white px-4 py-2 rounded mb-4"
+                  >
+                    Add New Product
+                  </button>
+                )}
 
 
 
@@ -500,26 +527,26 @@ const calculateOrderTotal = async (orders) => {
 
                 {allTemp1 && Object?.keys(allTemp1).length > 0 ? (
                   <>
-<div className="flex justify-between mb-2">
-  <span>First Name:</span>
-  <input
-    type="text"
-    className="border p-1 w-1/2"
-    value={editableData.fname}
-    onChange={(e) => handleFieldChange("fname", e.target.value)}
-    disabled={allTemp1?.delete === true}
-  />
-</div>
-<div className="flex justify-between mb-2">
-  <span>Last Name:</span>
-  <input
-    type="text"
-    className="border p-1 w-1/2"
-    value={editableData.lname}
-    onChange={(e) => handleFieldChange("lname", e.target.value)}
-    disabled={allTemp1?.delete === true}
-  />
-</div>
+                    <div className="flex justify-between mb-2">
+                      <span>First Name:</span>
+                      <input
+                        type="text"
+                        className="border p-1 w-1/2"
+                        value={editableData.fname}
+                        onChange={(e) => handleFieldChange("fname", e.target.value)}
+                        disabled={allTemp1?.delete === true}
+                      />
+                    </div>
+                    <div className="flex justify-between mb-2">
+                      <span>Last Name:</span>
+                      <input
+                        type="text"
+                        className="border p-1 w-1/2"
+                        value={editableData.lname}
+                        onChange={(e) => handleFieldChange("lname", e.target.value)}
+                        disabled={allTemp1?.delete === true}
+                      />
+                    </div>
 
 
                     <div className="flex justify-between mb-2">
@@ -591,15 +618,15 @@ const calculateOrderTotal = async (orders) => {
                     </div>
 
                     <div className="mt-4">
-<textarea
-  value={remark}
-  onChange={handleRemarkChange}
-  placeholder="Enter remark"
-  className="border p-1 w-full"
-  disabled={allTemp1?.delete === true}
-/>
+                      <textarea
+                        value={remark}
+                        onChange={handleRemarkChange}
+                        placeholder="Enter remark"
+                        className="border p-1 w-full"
+                        disabled={allTemp1?.delete === true}
+                      />
 
-                      <div className="mt-2"> 
+                      <div className="mt-2">
                         <button
                           onClick={handleSaveCustomerDetails}
                           className="bg-green-500 text-white p-1"

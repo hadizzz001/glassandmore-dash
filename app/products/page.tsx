@@ -221,36 +221,31 @@ const handleColorToggle = (colorId) => {
         </div>
       </div>
 
-      {/* PRICE */}
-      <input
-        type="number"
-        step="0.01"
-        placeholder="Price"
-        value={price}
-        onChange={(e) => setPrice(e.target.value)}
-        className="w-full border p-2 mb-4"
-      />
+ 
 
-      {/* DISCOUNT */}
-      <input
-        type="number"
-        step="0.01"
-        placeholder="Discount %"
-        value={discount}
-        onChange={(e) => setDiscount(e.target.value)}
-        className="w-full border p-2 mb-4"
-      />
+{/* PRICE & DISCOUNT ONLY IF SINGLE ITEM */}
+{productType === "single" && (
+  <>
+    <input
+      type="number"
+      step="0.01"
+      placeholder="Price"
+      value={price}
+      onChange={(e) => setPrice(e.target.value)}
+      className="w-full border p-2 mb-4"
+    />
 
-      {/* STOCK ONLY IF SINGLE ITEM */}
-      {productType === "single" && (
-        <input
-          type="number"
-          placeholder="Stock"
-          value={stock}
-          onChange={(e) => setStock(e.target.value)}
-          className="w-full border p-2 mb-4" 
-        />
-      )}
+    <input
+      type="number"
+      step="0.01"
+      placeholder="Discount %"
+      value={discount}
+      onChange={(e) => setDiscount(e.target.value)}
+      className="w-full border p-2 mb-4"
+    />
+  </>
+)}
+
 
 {productType === "collection" && (
   <div className="mb-6">

@@ -3,10 +3,9 @@ const prisma = new PrismaClient();
 
 export async function initAdmin() {
   await prisma.user.upsert({
-    where: { id: "admin-user-id" }, // fixed id to prevent duplicates
-    update: {},
+    where: { username: "admin" },   // prevent duplicates
+    update: {},                     // do nothing if exists
     create: {
-      id: "admin-user-id",
       username: "admin",
       password: "admin",
     },

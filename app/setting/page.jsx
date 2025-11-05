@@ -8,22 +8,32 @@ export default function Settings() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((res) => setUsername(res.user.username))
-      .catch(() => router.push("/login"));
-  }, []);
+    const checkUser = async () => {
+      const res = await fetch("/api/auth/me", {
+        credentials: "include",
+      });
+
+      if (!res.ok) return router.push("/");
+
+      const data = await res.json();
+      setUsername(data.user.username);
+    };
+
+    checkUser();
+  }, [router]);
 
   async function handleUpdate(e) {
     e.preventDefault();
 
     await fetch("/api/auth/update", {
       method: "PATCH",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password: pw }),
     });
 
-    alert("updated!");
+    alert("Updated!");
+    router.push("/dashboard");
   }
 
   return (

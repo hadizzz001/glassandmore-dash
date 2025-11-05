@@ -25,30 +25,10 @@ const login = () => {
         });
     }
 
-    // localStorage.setItem("tabID", tabID);
-    // window.dispatchEvent(new Event("storage"));
-
-    async function getData() {
-        const res = await fetch("http://localhost:3000/api/login", { cache: 'no-store' });
-        if (!res.ok) {
-            throw new Error("Failed to fetch data")
-        }
-        return res.json();
-    }
+ 
 
 
-    async function handleEditSubmit() {
-
-        axios
-            .patch(`/api/login/6541366999820c954845b8a8`, tabID)
-            .then((res) => {
-                console.log(res);
-            })
-            .catch((err) => {
-                console.log("Error");
-                console.log(err);
-            })
-    }
+ 
 
 
 
@@ -75,7 +55,7 @@ const handleSubmit = async (e) => {
     // ✅ Login success
     console.log("Logged in:", data);
     alert("Success");
-    router.push("/");
+    router.push("/dashboard");
   } catch (error) {
     console.error("Login error:", error);
     alert("Something went wrong.");
@@ -126,9 +106,7 @@ return (
             type="password"
             placeholder="******************"
           />
-          <p className="text-red-500 text-xs italic">
-            Please choose a password.
-          </p>
+   
         </div>
 
         <div className="flex items-center justify-between">

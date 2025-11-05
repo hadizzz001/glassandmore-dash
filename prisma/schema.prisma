@@ -80,3 +80,27 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+
+
+
+
+model Color {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  title        String  
+  code        String
+}
+
+
+model Size {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  title        String 
+}
+
+
+
+
+model Hotoffer {
+  id   String   @id @default(auto()) @map("_id") @db.ObjectId
+  name String   @unique
+  img  String[] 
+}

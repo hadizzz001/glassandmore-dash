@@ -1,48 +1,53 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
-import { serialize } from "cookie";
 import { sign } from "jsonwebtoken";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { COOKIE_NAME } from "../../../constants";
+import { compare } from "bcryptjs";
 
 const prisma = new PrismaClient();
-const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
-export async function POST(request) {
-  const { username, password } = await request.json();
+export async function POST(req) {
+  const { username, password } = await req.json();
 
+  // ✅ Always fetch ONLY this user, not by username
   const user = await prisma.user.findUnique({
-    where: { username },
+    where: { id: "690a3cd97e9ec99cd4826509" },
   });
 
   if (!user) {
+    return NextResponse.json({ message: "User not found" }, { status: 404 });
+  }
+
+  // ✅ Check username
+  if (user.username !== username) {
     return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
   }
 
-  const passwordValid = await bcrypt.compare(password, user.password);
-  if (!passwordValid) {
+  let isValidPassword = false;
+
+  // ✅ If password in DB is plain text (like "admin")
+  if (user.password === password) {
+    isValidPassword = true;
+  } else {
+    // ✅ Check bcrypt hash
+    isValidPassword = await compare(password, user.password);
+  }
+
+  if (!isValidPassword) {
     return NextResponse.json({ message: "Invalid credentials" }, { status: 401 });
   }
 
-  const token = sign(
-    {
-      userId: user.id,
-      username: user.username,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: MAX_AGE }
-  );
+  // ✅ Sign JWT token
+  const token = sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
-  const serialized = serialize(COOKIE_NAME, token, {
+  // ✅ Set login cookie
+  cookies().set(COOKIE_NAME, token, {
     httpOnly: true,
+    sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    maxAge: MAX_AGE,
     path: "/",
   });
 
-  return new Response(JSON.stringify({ message: "Success" }), {
-    status: 200,
-    headers: { "Set-Cookie": serialized },
-  });
+  return NextResponse.json({ message: "Logged in!" }, { status: 200 });
 }

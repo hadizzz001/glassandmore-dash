@@ -328,260 +328,245 @@ export default function ProductTable() {
 
 
  
-function EditProductForm({ product, onCancel, onSave }) {
-  const [title, setTitle] = useState(product.title);
-  const [stock, setStock] = useState(product.stock || "0");
-  const [img, setImg] = useState(product.img || []);
-  const [description, setDescription] = useState(product.description);
-  const [type, setType] = useState(product.type || "collection");
-  const [price, setPrice] = useState(product.price);
-  const [discount, setDiscount] = useState(product.discount);
+ 
+ function EditProductForm({ product, onCancel, onSave }) {
+const [title, setTitle] = useState(product?.title || "");
+const [description, setDescription] = useState(product?.description || "");
+const [price, setPrice] = useState(product?.price || 0);
+const [discount, setDiscount] = useState(product?.discount || 0);
+const [type, setType] = useState(product?.type || "single");
+const [stock, setStock] = useState(product?.stock || "");
+const [img, setImg] = useState(product?.img || []);
+
+const [selectedCategory, setSelectedCategory] = useState(product?.category || "");
+const [selectedSub, setSelectedSub] = useState(product?.sub || "");
+const [selectedFactory, setSelectedFactory] = useState(product?.factory || "");
+
+
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(product.category || "");
-  const [categories1, setCategories1] = useState([]);
-  const [selectedCategory1, setSelectedCategory1] = useState(product.sub || "");
-  const [categories2, setCategories2] = useState([]);
-  const [selectedCategory2, setSelectedCategory2] = useState(product.factory || "");
 
-  const availableColors = ["black", "white", "red", "yellow", "blue", "green", "orange", "purple", "brown", "gray", "pink"];
+  const [subCategories, setSubCategories] = useState([]);
 
-const [selectedColors, setSelectedColors] = useState(() => {
-  const initial = {};
-  (product.color || []).forEach(c => {
-    initial[c.color] = {
-      qty: c.qty || 1,
-    };
-  });
-  return initial;
-});
+  const [factories, setFactories] = useState([]);
 
+  // ✅ NEW (fetch from API)
+  const [colorOptions, setColorOptions] = useState([]);
+  const [sizeOptions, setSizeOptions] = useState([]);
 
-  // Fetch category options
+  // ✅ NEW DATA STRUCTURE: { colorId: [ { size, qty, price } ] }
+  const [colorSizeData, setColorSizeData] = useState({});
+
+  /** ✅ Fetch Colors & Sizes */
   useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        const categoriesRes = await fetch("/api/category");
-        setCategories(await categoriesRes.json());
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
-    fetchOptions();
-  }, []);
-
-  useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        const categoriesRes = await fetch("/api/sub");
-        setCategories1(await categoriesRes.json());
-      } catch (error) {
-        console.error("Error fetching subcategories:", error);
-      }
-    };
-    fetchOptions();
-  }, []);
-
-  useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        const categoriesRes = await fetch("/api/factory");
-        setCategories2(await categoriesRes.json());
-      } catch (error) {
-        console.error("Error fetching factories:", error);
-      }
-    };
-    fetchOptions();
-  }, []);
-
-const handleSubmit = (e) => {
-  e.preventDefault();
-
-  // ✅ NEW VALIDATION (no sizes anymore)
-  if (type === "collection") {
-    for (const [colorName, data] of Object.entries(selectedColors)) {
-      if (!data.qty || data.qty <= 0) {
-        alert(`Please enter a valid quantity (greater than 0) for color "${colorName}".`);
-        return;
-      }
+    async function loadColors() {
+      const res = await fetch("/api/color");
+      setColorOptions(await res.json());
     }
-  }
+    async function loadSizes() {
+      const res = await fetch("/api/size");
+      setSizeOptions(await res.json());
+    }
+    loadColors();
+    loadSizes();
+  }, []);
 
-  // Convert percentage discount to actual discounted price
-  let finalDiscountPrice = price;
-  if (price && discount) {
-    const percentage = Number(discount);
-    const numericPrice = Number(price);
-    const discountedValue = numericPrice - (numericPrice * percentage / 100);
-    finalDiscountPrice = discountedValue.toFixed(2);
-  }
+  /** ✅ Pre-fill existing product color/sizes */
+  useEffect(() => {
+    if (product.color) {
+      const prepared = {};
 
-  onSave({
-    ...product,
-    title,
-    description,
-    price: Number(price).toFixed(2),
-    discount: String(finalDiscountPrice),
-    img,
-    category: selectedCategory,
-    sub: selectedCategory1,
-    factory: selectedCategory2,
-    type,
-    ...(type === 'single' && { stock }),
-    ...(type === 'collection' && {
-      color: Object.entries(selectedColors).map(([colorName, data]) => ({
-        color: colorName,
-        qty: Number(data.qty),
-      }))
-    })
-  });
-};
+      product.color.forEach((c) => {
+        prepared[c.id] = c.sizes.map((s) => ({
+          size: s.size,
+          qty: s.qty,
+          price: s.price,
+        }));
+      });
 
+      setColorSizeData(prepared);
+    }
+  }, [product]);
 
-const toggleColor = (color) => {
-  setSelectedColors((prev) => {
-    if (prev[color]) {
+  /** ✅ Fetch Category / Sub / Factory */
+  useEffect(() => {
+    fetchList("/api/category", setCategories);
+    fetchList("/api/sub", setSubCategories);
+    fetchList("/api/factory", setFactories);
+  }, []);
+
+  const fetchList = async (url, setter) => {
+    const res = await fetch(url);
+    if (res.ok) setter(await res.json());
+  };
+
+  /** ✅ Select / remove color */
+  const handleColorToggle = (colorId) => {
+    setColorSizeData((prev) => {
       const updated = { ...prev };
-      delete updated[color];
+
+      if (updated[colorId]) {
+        delete updated[colorId];
+      } else {
+        updated[colorId] = sizeOptions.map((s) => ({
+          size: s.title,
+          qty: "",
+          price: "",
+        }));
+      }
       return updated;
-    } else {
-      return { ...prev, [color]: { qty: 1 } };
-    }
-  });
-};
+    });
+  };
 
+  /** ✅ Save */
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
- const updateQty = (color, qty) => {
-  setSelectedColors((prev) => ({
-    ...prev,
-    [color]: { qty },
-  }));
-};
+    const payload = {
+      ...product,
+      title,
+      description,
+price: String(price),
+discount: discount === "" ? null : String(discount),
 
+      img,
+      category: selectedCategory,
+      sub: selectedSub,
+      factory: selectedFactory,
+      type,
+
+      ...(type === "single" && { stock }),
+
+      ...(type === "collection" && {
+        color: Object.entries(colorSizeData).map(([colorId, sizes]) => {
+          const colorObj = colorOptions.find((c) => c.id === colorId);
+
+          return {
+            id: colorObj.id,
+            title: colorObj.title,
+            code: colorObj.code,
+            sizes: sizes
+              .filter((s) => s.qty > 0)
+              .map((s) => ({
+                size: s.size,
+                qty: Number(s.qty),
+                price: Number(s.price),
+              })),
+          };
+        }),
+      }),
+    };
+
+    onSave(payload);
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="text-[12px] border p-4 bg-gray-100 rounded">
+    <form onSubmit={handleSubmit} className="border p-4 bg-gray-100 rounded text-[12px]">
       <h2 className="text-xl font-bold mb-4">Edit Product</h2>
 
-      {/* Title */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700">Title</label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full border p-2"
-          required
-        />
-      </div>
+      <input className="border p-2 w-full mb-3" value={title} onChange={(e) => setTitle(e.target.value)} />
 
-
-
-      {/* Category Selects */}
-      <select className="w-full p-2 border mb-2" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} required>
+      {/* CATEGORY */}
+      <select className="border p-2 w-full mb-2" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
         <option value="">Select Category</option>
-        {categories.map((cat) => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+        {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
       </select>
 
-      <select className="w-full p-2 border mb-2" value={selectedCategory1} onChange={(e) => setSelectedCategory1(e.target.value)} required>
+      <select className="border p-2 w-full mb-2" value={selectedSub} onChange={(e) => setSelectedSub(e.target.value)}>
         <option value="">Select Sub-Category</option>
-        {categories1.map((cat) => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+        {subCategories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
       </select>
 
-      <select className="w-full p-2 border mb-2" value={selectedCategory2} onChange={(e) => setSelectedCategory2(e.target.value)} required>
+      <select className="border p-2 w-full mb-4" value={selectedFactory} onChange={(e) => setSelectedFactory(e.target.value)}>
         <option value="">Select Factory</option>
-        {categories2.map((cat) => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+        {factories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
       </select>
 
-      {/* Product Type */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2">
-            <input type="radio" name="type" value="single" checked={type === "single"} onChange={() => setType("single")} />
-            Single
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="radio" name="type" value="collection" checked={type === "collection"} onChange={() => setType("collection")} />
-            Collection
-          </label>
-        </div>
+      {/* TYPE */}
+      <div className="flex gap-4 mb-4">
+        <label><input type="radio" checked={type === "single"} onChange={() => setType("single")} /> Single</label>
+        <label><input type="radio" checked={type === "collection"} onChange={() => setType("collection")} /> Collection</label>
       </div>
 
-                  <div className="mt-4">
-              <label className="text-sm font-bold">Price</label>
-              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full border p-2 mb-2" />
-            </div>
+      {type === "single" && (
+        <input type="number" placeholder="Stock" className="border p-2 w-full mb-4" value={stock} onChange={(e) => setStock(e.target.value)} />
+      )}
 
-            <div className="mt-4">
-              <label className="text-sm font-bold">Discount %</label>
-              <input type="number" value={discount} onChange={(e) => setDiscount(e.target.value)} className="w-full border p-2 mb-2" />
-            </div>
+      <input type="number" placeholder="Price" className="border p-2 w-full mb-2" value={price} onChange={(e) => setPrice(e.target.value)} />
+      <input type="number" placeholder="Discount %" className="border p-2 w-full mb-4" value={discount} onChange={(e) => setDiscount(e.target.value)} />
 
-      {/* Price, Discount, Stock */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-        {type === "single" && (
-          <>
+      {/* ✅ COLORS + SIZES */}
+      {type === "collection" && (
+        <div className="mb-6">
+          <label className="font-bold text-lg">Colors</label>
 
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Stock</label>
-              <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} className="w-full border p-2" required />
-            </div>
-          </>
-        )}
-      </div>
-
-{type === "collection" && (
-  <div className="mb-6">
-    <label className="block text-lg font-bold mb-2">Choose Colors</label>
-    <div className="flex flex-col gap-4">
-      {availableColors.map((color) => {
-        const isSelected = selectedColors[color];
-
-        return (
-          <div key={color} className="p-3 border rounded-md">
-            <div className="flex items-center space-x-2 mb-2">
-              <div
-                className={`w-6 h-6 rounded-full cursor-pointer border-2 ${
-                  isSelected ? "ring-2 ring-offset-2 ring-black" : ""
-                }`}
-                style={{ backgroundColor: color }}
-                onClick={() => toggleColor(color)}
-              ></div>
-              <span className="capitalize font-medium">{color}</span>
-            </div>
-
-            {isSelected && (
-              <div className="ml-6 space-y-2">
-                <label className="font-semibold text-sm">Qty</label>
-                <input
-                  type="number"
-                  value={selectedColors[color].qty}
-                  onChange={(e) => updateQty(color, e.target.value)}
-                  className="border px-2 py-1 w-24"
-                />
+          <div className="flex flex-wrap gap-3 mt-3">
+            {colorOptions.map((c) => (
+              <div key={c.id} onClick={() => handleColorToggle(c.id)}
+                   className={`p-2 cursor-pointer rounded-md border w-24 text-center ${
+                     colorSizeData[c.id] ? "ring-2 ring-green-500" : ""
+                   }`}
+              >
+                <div className="w-7 h-7 rounded-full mx-auto border mb-1" style={{ backgroundColor: c.code }}></div>
+                {c.title}
               </div>
-            )}
+            ))}
           </div>
-        );
-      })}
-    </div>
-  </div>
-)}
 
+          {Object.keys(colorSizeData).map((colorId) => {
+            const colorObj = colorOptions.find((c) => c.id === colorId);
 
-      {/* Description */}
-      <label className="block text-lg font-bold mb-2">Description</label>
-      <ReactQuill value={description} onChange={setDescription} className="mb-4" theme="snow" placeholder="Write your product description here..." />
+            return (
+              <div key={colorId} className="border p-4 bg-gray-50 rounded mt-4">
+                <h3 className="font-bold flex items-center gap-2">
+                 <div
+  className="w-5 h-5 rounded-full"
+  style={{ backgroundColor: colorObj?.code || '#ccc' }}
+></div>
 
-      {/* Image Upload */}
+                {colorObj?.title || "Unknown Color"}
+
+                </h3>
+
+                {colorSizeData[colorId].map((item, idx) => (
+                  <div key={idx} className="grid grid-cols-3 gap-2 my-2">
+                    <span>{item.size}</span>
+
+                    <input type="number" className="border p-1"
+                           value={item.qty}
+                           placeholder="Qty"
+                           onChange={(e) => {
+                             const updated = [...colorSizeData[colorId]];
+                             updated[idx].qty = e.target.value;
+                             setColorSizeData({ ...colorSizeData, [colorId]: updated });
+                           }}
+                    />
+
+                    <input type="number" className="border p-1"
+                           value={item.price}
+                           placeholder="Price"
+                           onChange={(e) => {
+                             const updated = [...colorSizeData[colorId]];
+                             updated[idx].price = e.target.value;
+                             setColorSizeData({ ...colorSizeData, [colorId]: updated });
+                           }}
+                    />
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <label className="font-bold">Description</label>
+      <ReactQuill value={description} onChange={setDescription} className="mb-4" />
+
       <Upload onFilesUpload={(url) => setImg(url)} />
 
-      {/* Buttons */}
-      <div className="flex gap-2 mt-4">
-        <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">Save</button>
-        <button type="button" onClick={onCancel} className="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
-      </div>
+      <button className="bg-green-500 w-full text-white py-2 rounded">Save Product</button>
+      <button type="button" onClick={onCancel} className="bg-gray-500 text-white w-full py-2 rounded mt-2">
+        Cancel
+      </button>
     </form>
   );
 }

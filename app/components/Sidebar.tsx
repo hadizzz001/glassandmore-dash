@@ -65,11 +65,26 @@ export default function Sidebar() {
                 Orders
               </a>
             </li>  
+            <li>
+              <a href="/color" style={{ color: "white", textDecoration: "none" }}>
+                Colors
+              </a>
+            </li>  
+            <li>
+              <a href="/size" style={{ color: "white", textDecoration: "none" }}>
+                Sizes
+              </a>
+            </li>  
             {/* <li>
               <a href="/note" style={{ color: "white", textDecoration: "none" }}>
                 Notification
               </a>
             </li>  */}
+            <li>
+              <a href="/off" style={{ color: "white", textDecoration: "none" }}>
+                Hot Offers
+              </a>
+            </li>
             <li>
               <a href="/setting" style={{ color: "white", textDecoration: "none" }}>
                 Security Settings

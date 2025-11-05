@@ -13,11 +13,20 @@ export async function GET() {
   try {
     const payload = verify(token, process.env.JWT_SECRET);
 
+    if (!payload?.userId) {
+      return NextResponse.json({ message: "Invalid token" }, { status: 401 });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
+      select: { username: true },
     });
 
-    return NextResponse.json({ user: { username: user.username } }, { status: 200 });
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 401 });
+    }
+
+    return NextResponse.json({ user }, { status: 200 });
   } catch (e) {
     return NextResponse.json({ message: "Token invalid" }, { status: 401 });
   }

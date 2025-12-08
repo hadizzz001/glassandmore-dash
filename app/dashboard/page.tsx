@@ -418,46 +418,58 @@ const [selectedFactory, setSelectedFactory] = useState(product?.factory || "");
   };
 
   /** ✅ Save */
-  const handleSubmit = (e) => {
-    e.preventDefault();
+const handleSubmit = (e) => {
+  e.preventDefault();
 
-    const payload = {
-      ...product,
-      title,
-      description,
-price: String(price),
-discount: discount === "" ? null : String(discount),
+  // ✅ calculate final price after discount
+  const discountedPrice =
+    discount
+      ? (Number(price) - Number(price) * (Number(discount) / 100)).toFixed(2)
+      : null;
 
-      img,
-      category: selectedCategory,
-      sub: selectedSub,
-      factory: selectedFactory,
-      type,
+  const payload = {
+    ...product,
 
-      ...(type === "single" && { stock }),
+    title,
+    description,
 
-      ...(type === "collection" && {
-        color: Object.entries(colorSizeData).map(([colorId, sizes]) => {
-          const colorObj = colorOptions.find((c) => c.id === colorId);
+    // ORIGINAL PRICE
+    price: String(price),
 
-          return {
-            id: colorObj.id,
-            title: colorObj.title,
-            code: colorObj.code,
-            sizes: sizes
-              .filter((s) => s.qty > 0)
-              .map((s) => ({
-                size: s.size,
-                qty: Number(s.qty),
-                price: Number(s.price),
-              })),
-          };
-        }),
+    // FINAL PRICE AFTER DISCOUNT (80 if discount=20% on price=100)
+    discount: discountedPrice,
+
+    img,
+    category: selectedCategory,
+    sub: selectedSub,
+    factory: selectedFactory,
+    type,
+
+    ...(type === "single" && { stock }),
+
+    ...(type === "collection" && {
+      color: Object.entries(colorSizeData).map(([colorId, sizes]) => {
+        const colorObj = colorOptions.find((c) => c.id === colorId);
+
+        return {
+          id: colorObj.id,
+          title: colorObj.title,
+          code: colorObj.code,
+          sizes: sizes
+            .filter((s) => s.qty > 0)
+            .map((s) => ({
+              size: s.size,
+              qty: Number(s.qty),
+              price: Number(s.price),
+            })),
+        };
       }),
-    };
-
-    onSave(payload);
+    }),
   };
+
+  onSave(payload);
+};
+
 
   return (
     <form onSubmit={handleSubmit} className="border p-4 bg-gray-100 rounded text-[12px]">

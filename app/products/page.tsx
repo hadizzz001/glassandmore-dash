@@ -103,7 +103,9 @@ const handleColorToggle = (colorId) => {
       title,
       description,
       price: Number(price).toFixed(2),
-      discount: discount ? ((Number(price) * Number(discount)) / 100).toFixed(2) : null,
+      discount: discount
+  ? (Number(price) - (Number(price) * Number(discount) / 100)).toFixed(2)
+  : null,
       img,
       category: selectedCategory,
       sub: selectedsubCategory,
@@ -223,7 +225,6 @@ const handleColorToggle = (colorId) => {
 
  
 
-{/* PRICE & DISCOUNT ONLY IF SINGLE ITEM */}
 {productType === "single" && (
   <>
     <input
@@ -243,8 +244,19 @@ const handleColorToggle = (colorId) => {
       onChange={(e) => setDiscount(e.target.value)}
       className="w-full border p-2 mb-4"
     />
+
+    {/* ✅ STOCK FIELD */}
+    <input
+      type="number"
+      placeholder="Stock Quantity"
+      value={stock}
+      onChange={(e) => setStock(e.target.value)}
+      className="w-full border p-2 mb-4"
+      required
+    />
   </>
 )}
+
 
 
 {productType === "collection" && (
